@@ -1,0 +1,20 @@
+{
+  "name": "effi_lab",
+  "version": "1.0.0",
+  "description": "A project that delves into a project managment system for begginers",
+  "main": "inital.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Backend",
+    "API",
+    "creation"
+  ],
+  "author": "Anshumaan",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "3.7.4"
+  }
+}

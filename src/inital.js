@@ -6,7 +6,7 @@ dotenv.config({ // this object is here to basically give the path of env
 // Express is used in routing shit from here to there 
 // Routing = deciding what to do when a request comes in.
 // its basically us mapping a URL to specific code.
-const app = express()
+
 const port = process.env.PORT || 1262
 
 

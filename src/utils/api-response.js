@@ -1,12 +1,12 @@
-// Basically we standardise the response we get from a user into a stream of pre defined data
-// Ki yeh toh hoga hi baaki kuch ho na ho esmai 
-class ApiResponse {
-    constructor(statuscode, data, message = "sucess") {
-        this.statuscode = statuscode
-        this.message = message
-        this.data = data
-        this.sucess = statuscode < 400 // usually under 400 is sucess
+class APIreposnse {
+    constructor(StatusCode, Data, Message = "sucess") {
+        this.StatusCode = StatusCode
+        this.Data = Data
+        this.message = this.message
+        this.sucess = StatusCode < 400
     }
 }
-// exports out this class for us 
-export { ApiResponse }
+
+export { APIreposnse }
+
+// Now whenever i would have to send a response FROM the server i will use this class and fill my data in it 

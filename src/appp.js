@@ -1,39 +1,40 @@
 import express from "express"
 import cors from "cors"
+
+// so now for express to handle routing we make a const and a port
+
 const app = express()
 
 
-// app.use is basically our middleware 
-
-// Basic configs
-app.use(express.json({ limit: "16kb" })) //allows backend to take in json info
-app.use(express.urlencoded({ extended: true, limit: "32kb" }))//to take links 
-
-app.use(express.static("public"))// allows us to serve the folder
-
-// cors Configs , let our cors take some configrable value
-app.use(cors({
-    // origin diya utha kar env variables se and made it split via , gave or opt
-    origin: process.env.CORS_ORIGION?.split(",") || "Http://localhost:1080/",
-    credentials: true, //basically used for cookies
-    // what methods we suppport from cross platform entries 
-    methods: ["GET", "PUT", "PUSH", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type"]
-
-}))
-
-
-
-
+// now we create a fn that takes in two values request and response and gives out a hello world as response 
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    res.send("hello world")
 })
 
 
-app.get('/instagram', (req, res) => {
-    res.send("this is an instagram site")
-})
+// Configuring our Express // BASIC
+
+// can take in x amount of json data 
+app.use(express.json({ limit: "18kb" }))
+
+// can take data from a url
+
+app.use(express.urlencoded({ extended: true, limit: "18kb" }))
+
+// serving data from public folder 
+
+app.use(express.static("public"))
+
+// CORS configs , we give an object within cors 
+
+app.use(cors({
+    origin: process.env.CORS_ORIGION,
+    Credentials: true,
+    methods: ["POST", "PUT", "PATCH", "DELETE", "GET"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+
+}))
 
 
 export default app

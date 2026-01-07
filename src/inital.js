@@ -1,17 +1,25 @@
 import dotenv from "dotenv"
 import app from "./appp.js"
-dotenv.config({ // this object is here to basically give the path of env
-    path: "D:/Projects/Project_Managment/.env", // ./ - home direcotry
-});
-// Express is used in routing shit from here to there 
-// Routing = deciding what to do when a request comes in.
-// its basically us mapping a URL to specific code.
 
-const port = process.env.PORT || 1262
+// we need to configure our dotenv , path is not necessary unless its in some other place than root directory 
+dotenv.config()
+const name = process.env.USER_NAME
 
+console.log("User name is", name)
+
+
+
+// YEH YAHI RAHEGA 
+//{
+
+// make a env variable of port to keep that data safe 
+
+const port = process.env.PORT
+
+// Now we make it listen at our made port from which we can get the output
 
 app.listen(port, () => {
-    console.log(`Example app listening on port http://loacalhost:${port}`)
+    console.log(`The app is listening on port http://localhost:${port}`)
 })
 
-
+// }

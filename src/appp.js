@@ -37,4 +37,10 @@ app.use(cors({
 }))
 
 
+// Importing routes
+import HealthCheckRouter from "./routes/HealthCheck.route.js"
+
+//The additinoal foramtting is added here only 
+app.use("/api/v1/healthcheck", HealthCheckRouter)
+
 export default app

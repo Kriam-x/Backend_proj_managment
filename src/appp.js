@@ -1,6 +1,5 @@
 import express from "express"
 import cors from "cors"
-
 // so now for express to handle routing we make a const and a port
 
 const app = express()
@@ -36,11 +35,35 @@ app.use(cors({
 
 }))
 
+import cookieParser from "cookie-parser"
+
+app.use(cookieParser())
 
 // Importing routes
 import HealthCheckRouter from "./routes/HealthCheck.route.js"
 
 //The additinoal foramtting is added here only 
 app.use("/api/v1/healthcheck", HealthCheckRouter)
+
+
+import authRouter from "./routes/authRoute.js"
+
+app.use("/api/v1/auth", authRouter)
+
+
+// Global error handler (must be after all routes)
+app.use((err, req, res, next) => {
+    console.error("Global Error Handler:", err)
+
+    const statusCode = err.StatusCode || 500
+    const message = err.message || "Something went wrong"
+
+    res.status(statusCode).json({
+        success: false,
+        message,
+        errors: err.errors || []
+    })
+})
+
 
 export default app

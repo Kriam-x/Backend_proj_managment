@@ -2,7 +2,7 @@ class APIresponse {
     constructor(StatusCode, Data, Message = "sucess") {
         this.StatusCode = StatusCode
         this.Data = Data
-        this.message = this.message
+        this.message = Message
         this.sucess = StatusCode < 400
     }
 }

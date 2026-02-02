@@ -20,15 +20,26 @@ const port = process.env.PORT
 
 // We upgrade it to make sure the app listens only when database is connected 
 
+// Connect_DB()
+//     .then(
+//         app.listen(port, () => {
+//             console.log(`The app is listening on port http://localhost:${port}`)
+//         })
+
+//     )
+//     .catch((err) => {
+//         console.log("MongoDB connection error", err)
+//         process.exit(1)
+//     })
+// // }
+
 Connect_DB()
-    .then(
+    .then(() => {
         app.listen(port, () => {
             console.log(`The app is listening on port http://localhost:${port}`)
         })
-
-    )
+    })
     .catch((err) => {
         console.log("MongoDB connection error", err)
         process.exit(1)
     })
-// }

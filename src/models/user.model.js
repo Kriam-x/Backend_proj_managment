@@ -1,135 +1,124 @@
-// Here we keep all the structre of our data 
 import mongoose, { Schema } from "mongoose"
-import { urlencoded } from "express"
-import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
 import crypto from "crypto"
-// this is a method that takes an object 
-// Ek object mai sare parameters hai and second mai timeseries hai we make timpestamps on hai , 
-const UserSchema = new Schema({
-    avatar: {
-        type: {
-            url: String,
-            localPath: String
-        },
-        default: {
-            url: `https://placehold.co/200x200`,
-            localPath: ""
-        }
 
+// This schema defines all user data and structure
+const UserSchema = new Schema({
+    // Avatar object with default placeholder
+    avatar: {
+        type: { url: String, localPath: String },
+        default: { url: "https://placehold.co/200x200", localPath: "" }
     },
+
+    // USERNAME - must be unique, lowercase, trimmed
     username: {
         type: String,
-        required: true, // makes it a mandatory feild
-        unique: true, // makes sure value is unique
-        lowercase: true, // everything is stored in lower
-        trim: true, // Extra spaces gone 
-        index: true,
-    },
-    Email: {
-        type: String,
-        unique: true,
         required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        index: true
+    },
+
+    // EMAIL - lowercase, unique, required
+    // FIX: schema uses lowercase `email` consistently
+    email: {
+        type: String,
+        required: true,
+        unique: true,
         lowercase: true,
         trim: true
     },
-    Full_Name: {
+
+    // Full name of user, optional
+    full_name: {
         type: String,
         trim: true
     },
-    Password: {
+
+    // PASSWORD - required
+    password: {
         type: String,
-        required: [true, "Password is required"] // custom error
+        required: [true, "Password is required"]
     },
-    IsEmailVerified: {
+
+    // Email verification status
+    isEmailVerified: {
         type: Boolean,
-        default: false // by default no one is verified
+        default: false
     },
-    Refresh_token: {
-        type: String
-    },
-    ForgotPasswordToken: {
-        type: String
-    },
-    ForgotpassExp: {
-        type: Date
-    },
-    EmailVerifToken: {
-        type: String
-    },
-    EmailverifExp: {
-        type: Date
+
+    refresh_token: String,
+    forgotPasswordToken: String,
+    forgotpassExp: Date,
+    emailVerifToken: String,
+    emailVerifExp: Date
+
+}, { timestamps: true })
+
+/* ------------------------------------------------------------------
+   FIX: Remove old MongoDB index created with `Email` (capital E)
+   WHY:
+   - MongoDB does NOT auto-remove old indexes
+   - Old index caused `Email: null` duplicate key errors
+-------------------------------------------------------------------*/
+UserSchema.on("init", async function (model) {
+    try {
+        const indexes = await model.collection.indexes()
+        const hasOldEmailIndex = indexes.find(i => i.name === "Email_1")
+        if (hasOldEmailIndex) {
+            await model.collection.dropIndex("Email_1")
+            console.log("✔ Dropped old Email_1 index")
+        }
+    } catch (err) {
+        console.warn("Index cleanup skipped:", err.message)
     }
-},
-    {
-        timestamps: true
-    }
-)
-// We add hooks before we export these files 
-
-// Intresting piece of code We Use a proper function beacuse it needs some context then hash our password to secure it 
-// Then we add a saftey layer to make sure it only runs when we want it to 
-
-UserSchema.pre("save", async function (next) {
-    if (!this.isModified(Password)) return next() // saftey 
-
-    this.Password = await bcrypt.hash(this.Password, 10)
-    next()
 })
 
-// Verification of password method
+// Pre-save hook to hash password
+// FIX: async hook does NOT use next()
+UserSchema.pre("save", async function () {
+    if (!this.isModified("password")) return
+    this.password = await bcrypt.hash(this.password, 10)
+})
 
-UserSchema.methods.IsPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.Password)
+// Method to compare password during login
+UserSchema.methods.isPasswordCorrect = async function (password) {
+    return bcrypt.compare(password, this.password)
 }
 
-UserSchema.methods.Generate_Acess_token = function () {
-    return jwt.sign({
-        // this is called our payload
-        _id: this._id,
-        email: this.email,
-        username: this.username
-    },
-        // Now we give our secret
-        process.env.ACESS_TOKEN_SECRET
-        // now we give expiry time  here 
-        , {
-            expiresIn: process.env.ACESS_TOKEN_EXPIRY
-        }
+// Generate access token
+UserSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        { _id: this._id, email: this.email, username: this.username },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+    )
+}
+// Generate refresh token 
+UserSchema.methods.generateRefreshToken = function () {
+    return jwt.sign(
+        { _id: this._id },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
     )
 }
 
-// Similarly we generate referesh token
 
-UserSchema.methods.Generate_Refresh_token = function () {
-    return jwt.sign({
-        _id: this._id
-    },
-        process.env.Generate_Refresh_Token,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
-        }
-
-    )
-}
-
-//Temporary tokens can be createsd by using a crypto library of node itself 
-// Since crypto has been put out of use i will not recommend to use it and will update this section when i know a better alterantive 
-
-UserSchema.methods.Generate_temporary_token = function () {
-    const Un_hashedtoken = crypto.randomBytes(20).toString("hex")
-
-    const Hashed_Token = crypto
+// Generate temporary token for email verification
+// FIX: Date.now() must be CALLED
+UserSchema.methods.generateTemporaryToken = function () {
+    const un_hashedToken = crypto.randomBytes(20).toString("hex")
+    const hashedToken = crypto
         .createHash("sha256")
-        .update(Un_hashedtoken)
+        .update(un_hashedToken)
         .digest("hex")
-    const Token_expiry = Date.now + (20 * 60 * 1000)// 20 min
-    return { Hashed_Token, Un_hashedtoken, Token_expiry }
+
+    const tokenExpiry = Date.now() + (20 * 60 * 1000) // about 20 minutes 
+    return { hashedToken, un_hashedToken, tokenExpiry }
 }
 
-
-
-
-
-// basically what model we want and from where 
-export const user = mongoose.model("user", UserSchema)
+// Export model
+const User = mongoose.model("User", UserSchema)
+export default User

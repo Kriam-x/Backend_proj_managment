@@ -295,8 +295,37 @@ const resetforgotpassword = async_handler(async (req, res) => {
     user.forgotPasswordToken = undefined
     user.password = newPassword
     await user.save({ validateBeforeSave: flase })
-
+    return res
+        .status(200)
+        .json(
+            new APIresponse(
+                200,
+                {},
+                "Password set sucessful"
+            )
+        )
 })
 
 
-export { Register_User, LoginUser, LogoutUser, CurrentUser, verifyEmail, Refreshacessstoken, Resendemailverification, forgotPassReq }
+const ChangeCurrentpassword = async_handler(async (req, res) => {
+    const { oldpassword, NewPassword } = req.body
+    const user = await User.findById(user?._id)
+
+    const Valid_pass_check = await user.isPasswordCorrect(oldpassword)
+
+    if (!Valid_pass_check) { throw new APIerror(400, "Old password is incorrect ") }
+
+    user.password = NewPassword
+    await user.save({ validateBeforeSave: false })
+    return res
+        .status(200)
+        .json(
+            new APIresponse(
+                200,
+                {},
+                "Password reset sucessfully"
+            )
+        )
+})
+
+export { Register_User, LoginUser, LogoutUser, CurrentUser, verifyEmail, Refreshacessstoken, Resendemailverification, forgotPassReq, resetforgotpassword, ChangeCurrentpassword }

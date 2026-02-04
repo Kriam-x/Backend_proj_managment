@@ -51,7 +51,7 @@ const Register_User = async_handler(async (req, res) => {
         subject: "Please verify your email",
         mail_content: mail_content(
             newUser.username,
-            `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${un_hashedToken}`
+            `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${un_hashedToken}`
         )
     })
 
@@ -72,10 +72,15 @@ const LoginUser = async_handler(async (req, res) => {
     // if (email) conditions.push(email)
     if (email) conditions.push({ email: email })
 
+
     const user = await User.findOne({ $or: conditions })
 
     if (!user) {
         throw new APIerror(400, "User Does Not Exsist")
+    }
+    // 🔒 ADD THIS
+    if (!user.isEmailVerified) {
+        throw new APIerror(403, "Please verify your email before logging in")
     }
 
     const passCheck = await user.isPasswordCorrect(password)
@@ -107,7 +112,7 @@ const LoginUser = async_handler(async (req, res) => {
                     Acesstoken,
                     Refreshtoken
                 },
-                "User logged in Sucessfully"
+                "User logged in Successfully"
             )
         )
 
@@ -178,6 +183,9 @@ const verifyEmail = async_handler(async (req, res) => {
     // if user exsists then we trun the verification to true 
     user.isEmailVerified = true
     await user.save({ validateBeforeSave: false })
+    return res.status(200).json(
+        new APIresponse(200, {}, "Email verified successfully")
+    )
 })
 
 // Resend email for verification 
@@ -187,16 +195,16 @@ const Resendemailverification = async_handler(async (req, res) => {
     if (user.isEmailVerified) { throw new APIerror(409, "email is already verified") }
     // The process of email sending just repeats itself 
     const { hashedToken, un_hashedToken, tokenExpiry } = newUser.generateTemporaryToken()
-    newUser.emailVerifToken = hashedToken
-    newUser.emailVerifExp = tokenExpiry
+    user.emailVerifToken = hashedToken
+    user.emailVerifExp = tokenExpiry
     await newUser.save({ validateBeforeSave: false })
 
     // Send verification email
     await SendEmail({
-        email: newUser.email,
+        email: user.email,
         subject: "Please verify your email",
         mail_content: mail_content(
-            newUser.username,
+            user.username,
             `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${un_hashedToken}`
         )
     })
@@ -301,7 +309,7 @@ const resetforgotpassword = async_handler(async (req, res) => {
             new APIresponse(
                 200,
                 {},
-                "Password set sucessful"
+                "Password set successful"
             )
         )
 })
@@ -309,7 +317,7 @@ const resetforgotpassword = async_handler(async (req, res) => {
 
 const ChangeCurrentpassword = async_handler(async (req, res) => {
     const { oldpassword, NewPassword } = req.body
-    const user = await User.findById(user?._id)
+    const user = await User.findById(req.user?._id)
 
     const Valid_pass_check = await user.isPasswordCorrect(oldpassword)
 
@@ -323,7 +331,7 @@ const ChangeCurrentpassword = async_handler(async (req, res) => {
             new APIresponse(
                 200,
                 {},
-                "Password reset sucessfully"
+                "Password reset successfully"
             )
         )
 })

@@ -11,9 +11,18 @@ const router = Router()
 router.route("/register").post(RegisterUserValidator(), Validate, Register_User) // checked 
 router.route("/login").post(UserLoginValidator(), Validate, LoginUser)//checked 
 router.route("/verify-email/:verificationtoken").get(verifyEmail)// checked 
-router.route("/refresh-acess-token").post(Refreshacessstoken)
-router.route("/forgot-password").post(ForgotpasswordValidator(), Validate, forgotPassReq)
-router.route("/reset-password/:resetToken").post(resetforgotpasswordValidator(), Validate, resetforgotpassword)
+router.route("/refresh-acess-token").post(Refreshacessstoken) // checked 
+router.route("/forgot-password").post(ForgotpasswordValidator(), Validate, forgotPassReq) // checked 
+router.get("/reset-password/:resetToken", (req, res) => {
+    res.json({ ok: true, message: "Token is valid. Now send new password via POST." })
+})
+router.post(
+
+    "/reset-password/:resetToken",
+    resetforgotpasswordValidator(),
+    Validate,
+    resetforgotpassword
+) // checked 
 
 // 🔐 SECURE ROUTES
 router.route("/logout").post(verifyJWT, LogoutUser)//checked

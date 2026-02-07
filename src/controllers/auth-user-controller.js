@@ -194,10 +194,10 @@ const Resendemailverification = async_handler(async (req, res) => {
     if (!user) { throw new APIerror(409, "User Not found") }
     if (user.isEmailVerified) { throw new APIerror(409, "email is already verified") }
     // The process of email sending just repeats itself 
-    const { hashedToken, un_hashedToken, tokenExpiry } = newUser.generateTemporaryToken()
+    const { hashedToken, un_hashedToken, tokenExpiry } = user.generateTemporaryToken()
     user.emailVerifToken = hashedToken
     user.emailVerifExp = tokenExpiry
-    await newUser.save({ validateBeforeSave: false })
+    await user.save({ validateBeforeSave: false })
 
     // Send verification email
     await SendEmail({
@@ -205,7 +205,7 @@ const Resendemailverification = async_handler(async (req, res) => {
         subject: "Please verify your email",
         mail_content: mail_content(
             user.username,
-            `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${un_hashedToken}`
+            `${req.protocol}://${req.get("host")}/api/v1/auth/verify-email/${un_hashedToken}`
         )
     })
     return res
@@ -223,43 +223,57 @@ const Resendemailverification = async_handler(async (req, res) => {
 // You can only do it via the refreshtoken 
 
 const Refreshacessstoken = async_handler(async (req, res) => {
-    const incomingreftoken = req.body.Refreshtoken || req.cookies.Refreshtoken
-    if (!incomingreftoken) { throw new APIerror(401, "No token found") }
-    // Now we decode the given token
+    const incomingreftoken =
+        req.cookies?.Refreshtoken || req.body?.Refreshtoken
+
+    if (!incomingreftoken) {
+        throw new APIerror(401, "No refresh token found")
+    }
+
     try {
-        const decodedreftoken = jwt.verify(incomingreftoken, process.env.REFRESH_TOKEN_SECRET)
+        const decodedreftoken = jwt.verify(
+            incomingreftoken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
 
         const user = await User.findById(decodedreftoken?._id)
 
-        if (!user) { throw new APIerror(401, "invalid decodedreftoken") }
+        if (!user) {
+            throw new APIerror(401, "Invalid refresh token")
+        }
 
-        if (incomingreftoken !== user?.refresh_token) { throw new APIerror(401, "Refresh token expired") }
+        if (incomingreftoken !== user.refresh_token) {
+            throw new APIerror(401, "Refresh token expired or reused")
+        }
+
+        const { Acesstoken, Refreshtoken: NewRefreshtoken } =
+            await GenerateAcessandRefereshtoken(user._id)
+
+        user.refresh_token = NewRefreshtoken
+        await user.save({ validateBeforeSave: false })
 
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,   // set false on localhost if needed
+            sameSite: "strict"
         }
-
-        const { Acesstoken, Refreshtoken: NewRefreshtoken } = await GenerateAcessandRefereshtoken(user._id)
-
-        user.refresh_token = NewRefreshtoken
-        await user.save()
 
         return res
             .status(200)
-            .cookies(Acesstoken, options)
-            .cookies(NewRefreshtoken, options)
+            .cookie("Acesstoken", Acesstoken, options)
+            .cookie("Refreshtoken", NewRefreshtoken, options)
             .json(
-                200,
-                { Acesstoken, Refreshtoken: NewRefreshtoken },
-                "Acess token refreshed"
+                new APIresponse(
+                    200,
+                    { Acesstoken, Refreshtoken: NewRefreshtoken },
+                    "Access token refreshed"
+                )
             )
     } catch (error) {
-
-        throw new APIerror(401, "invalid refreshtoken")
+        throw new APIerror(401, "Invalid or expired refresh token")
     }
-
 })
+
 
 const forgotPassReq = async_handler(async (req, res) => {
     const { email } = req.body
@@ -302,7 +316,7 @@ const resetforgotpassword = async_handler(async (req, res) => {
     user.forgotpassExp = undefined
     user.forgotPasswordToken = undefined
     user.password = newPassword
-    await user.save({ validateBeforeSave: flase })
+    await user.save({ validateBeforeSave: false })
     return res
         .status(200)
         .json(

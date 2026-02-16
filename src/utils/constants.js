@@ -7,8 +7,8 @@ export const UserRoleEnum = {
     member: "member"
 }
 
-// We can also pass it as an array 
-export const UserRole = Object.values(UserRoleEnum)
+// We can also pass it as an array , user role enum ki value esmai as an array form mai stored hai 
+export const AvaliableUserRole = Object.values(UserRoleEnum)
 
 // For our tasks 
 
@@ -18,4 +18,4 @@ export const TaskStatus = {
     In_Progress: "Inporgress"
 }
 
-export const StatusTask = Object.values(TaskStatus)
+export const AvaliableStatusTask = Object.values(TaskStatus)

@@ -1,8 +1,8 @@
-import mongoose, { Schema } from "mongoose"
+import mongoose, { mongo, Schema } from "mongoose"
 import { UserRoleEnum, AvaliableUserRole, AvaliableStatusTask, TaskStatus } from "../utils/constants.js"
 
 
-const Task = new Schema({
+const TaskSchema = new Schema({
     title: {
         type: String,
         required: true,
@@ -29,6 +29,7 @@ const Task = new Schema({
         enum: AvaliableStatusTask,
         default: TaskStatus.TODO
     },
+    // Make sure to add pdf , image and doc compatability 
     attachments: {
         type: [{
             url: String,
@@ -38,3 +39,5 @@ const Task = new Schema({
         default: []
     }
 }, { timestamps: true })
+
+export const task = mongoose.model("Task", TaskSchema)

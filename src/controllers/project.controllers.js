@@ -87,11 +87,11 @@ const Getprojectbyid = async_handler(async (req, res) => {
     }
     return res
         .status(200)
-        .json(
+        .json(new APIresponse(
             200,
             project,
             "project found sucessfully"
-        )
+        ))
 
 
 })
@@ -161,13 +161,14 @@ const Deleteproject = async_handler(async (req, res) => {
     return res
         .status(200)
         .json(
-            200,
-            project,
-            "project deleted sucessfuly"
+            new APIresponse(
+                200,
+                project,
+                "project deleted sucessfuly")
         )
 })
 
-
+//done
 const addprojectmember = async_handler(async (req, res) => {
     // For adding a member we would need email or username , project id (of the one to be added to ) , role (to give acess to facilities)
     const { email, role } = req.body
@@ -200,10 +201,74 @@ const addprojectmember = async_handler(async (req, res) => {
     )
     return res
         .status(200)
-        .json(
+        .json(new APIresponse(
             200,
             {},
             "Project member added sucessfully"
+        ))
+})
+
+// done 
+const GetProjectmembers = async_handler(async (req, res) => {
+    const { projectId } = req.params
+    const project = await Project.findById(projectId)
+    // Now we have the acess to project and hence we can write a piple to get every member of the project , we can seprate them based on roles or just list them as is
+    if (!project) {
+        throw new APIerror(404, "project not found")
+    }
+
+    const ProjectMembers = await Projectmember.aggregate([
+        {
+            $match: {
+                project: new mongoose.Types.ObjectId(projectId)
+            },
+        },
+        {
+            $lookup: {
+                from: "user", // name of the collection , not a reference to
+                localField: "User",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [
+                    {
+                        // basically the data we want 
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1, // eski reference check kar lena ek baari if pipkine does not work 
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                user: {
+                    $arrayElemAt: ["$user", 0]
+                }
+            }
+        },
+        {
+            $project: {
+                project: 1,
+                user: 1,
+                role: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                _id: 0
+            }
+        }
+    ])
+    return res
+        .status(200)
+        .json(
+            new APIresponse(
+                200,
+                ProjectMembers,
+                "Members fetch sucessfully "
+            )
+
         )
 })
 

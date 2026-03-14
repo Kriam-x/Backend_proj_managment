@@ -12,6 +12,7 @@ import { APIerror } from "../utils/api-error.js"
 import { APIresponse } from "../utils/api-response.js"
 import mongoose, { Mongoose } from "mongoose"
 import { UserRoleEnum } from "../utils/constants.js"
+
 //done 
 const Getprojects = async_handler(async (req, res) => {
     const projects = await Projectmember.aggregate(
@@ -75,9 +76,26 @@ const Getprojects = async_handler(async (req, res) => {
         )
 })
 
+//done
 const Getprojectbyid = async_handler(async (req, res) => {
+    // we first decide the method by which we will recive the id for a specific project , frontend person see's to it , Im assuming params here 
+    const { projectId } = req.params
+    // baaki is same look it up by id 
+    const project = await Project.findById(projectId)
+    if (!project) {
+        throw new APIerror(404, "ProjectId not found")
+    }
+    return res
+        .status(200)
+        .json(
+            200,
+            project,
+            "project found sucessfully"
+        )
+
 
 })
+
 // done 
 const Createproject = async_handler(async (req, res) => {
     const { name, description } = req.body // body se 2 cheez uthaege
@@ -105,6 +123,7 @@ const Createproject = async_handler(async (req, res) => {
         )
 
 })
+
 //done
 const updateproject = async_handler(async (req, res) => {
     const { name, description } = req.body
@@ -129,6 +148,7 @@ const updateproject = async_handler(async (req, res) => {
             new APIresponse(200, project, "project updates sucessfully")
         )
 })
+
 // done 
 const Deleteproject = async_handler(async (req, res) => {
     const { projectId } = req.params
@@ -147,21 +167,61 @@ const Deleteproject = async_handler(async (req, res) => {
         )
 })
 
-const addprojectmember = async_handler(async (req, res) => {
 
+const addprojectmember = async_handler(async (req, res) => {
+    // For adding a member we would need email or username , project id (of the one to be added to ) , role (to give acess to facilities)
+    const { email, role } = req.body
+    const { projectId } = req.params
+
+    const user = await Project.findOne({ email })
+
+    if (!user) {
+        throw new APIerror("user not found")
+    }
+
+    // dont restrain your mind , remember the schemas you made here we just updat the project member schema 
+    await Projectmember.findByIdAndUpdate(
+        // 1st is find this data based on these params 
+        {
+            user: new mongoose.Types.ObjectId(user._id),
+            project: new mongoose.Types.ObjectId(projectId)
+        },
+        // Update these values now   
+        {
+            user: new mongoose.Types.ObjectId(user._id),
+            project: new mongoose.Types.ObjectId(projectId),
+            role: role
+        },
+        {
+            new: true,
+            upsert: true // creates a neew document if one does not already exsist  
+        }
+
+    )
+    return res
+        .status(200)
+        .json(
+            200,
+            {},
+            "Project member added sucessfully"
+        )
 })
+
 
 const Updatememberrole = async_handler(async (req, res) => {
 
 })
 
+
 const listprojectmembers = async_handler(async (req, res) => {
 
 })
 
+
 const deleteprojectmember = async_handler(async (req, res) => {
 
 })
+
 
 export {
     deleteprojectmember,

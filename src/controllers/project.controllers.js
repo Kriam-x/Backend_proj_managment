@@ -11,7 +11,7 @@ import crypto from "crypto"
 import { APIerror } from "../utils/api-error.js"
 import { APIresponse } from "../utils/api-response.js"
 import mongoose, { Mongoose } from "mongoose"
-import { UserRoleEnum } from "../utils/constants.js"
+import { AvaliableUserRole, UserRoleEnum } from "../utils/constants.js"
 
 //done 
 const Getprojects = async_handler(async (req, res) => {
@@ -208,7 +208,7 @@ const addprojectmember = async_handler(async (req, res) => {
         ))
 })
 
-// done 
+// done , this is basically list project members 
 const GetProjectmembers = async_handler(async (req, res) => {
     const { projectId } = req.params
     const project = await Project.findById(projectId)
@@ -274,28 +274,82 @@ const GetProjectmembers = async_handler(async (req, res) => {
 
 
 const Updatememberrole = async_handler(async (req, res) => {
+    const { projectId, userId } = req.params
+    const { newRole } = req.body
+    if (!AvaliableUserRole.includes(newRole)) {
+        throw new APIerror(400, "Role does not exsist")
+    }
 
-})
+    let projectMember = await Projectmember.findOne({
+        project: new Mongoose.Types.ObjectId(projectId),
+        user: new mongoose.Types.ObjectId(userId)
+    })
 
+    if (!projectMember) {
+        throw new APIerror(400, "User not found")
+    }
 
-const listprojectmembers = async_handler(async (req, res) => {
+    const Projectmember = await projectMember.findByIdAndUpdate(
+        Projectmember._id,
+        {
+            role: newRole
+        },
+        { new: true }
+    )
+
+    if (!Projectmember) {
+        throw new APIerror(400, "User not found")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new APIresponse(200, Updatememberrole, "role changed sucessfully")
+        )
 
 })
 
 
 const deleteprojectmember = async_handler(async (req, res) => {
+    const { projectId, userId } = req.params
+    const { newRole } = req.body
+    if (!AvaliableUserRole.includes(newRole)) {
+        throw new APIerror(400, "Role does not exsist")
+    }
 
+    let projectMember = await Projectmember.findOne({
+        project: new Mongoose.Types.ObjectId(projectId),
+        user: new mongoose.Types.ObjectId(userId)
+    })
+
+    if (!projectMember) {
+        throw new APIerror(400, "User not found")
+    }
+
+    const Projectmember = await projectMember.findByIdAndDelete(
+        Projectmember._id,
+    )
+
+    if (!Projectmember) {
+        throw new APIerror(400, "User not found")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new APIresponse(200, Updatememberrole, "User deleted sucessfully")
+        )
 })
 
 
 export {
     deleteprojectmember,
-    listprojectmembers,
     Updatememberrole,
     addprojectmember,
     Createproject,
     Getprojectbyid,
     Getprojects,
     Deleteproject,
-    updateproject
+    updateproject,
+    GetProjectmembers
 }

@@ -14,6 +14,7 @@ import { verifyJWT, ValidateProjectPermission } from "../middleware/auth.middlew
 import { AddprojectmemberValidator, Createprojectvalidator, RegisterUserValidator, UserLoginValidator, } from "../validators/index.js"
 import { Validate } from "../middleware/Validator.middleware.js"
 import { AvaliableUserRole, UserRoleEnum } from "../utils/constants.js"
+import upload from "../middleware/fileupload.middleware.js"
 
 // Controllers ko route karege hum edhar  
 

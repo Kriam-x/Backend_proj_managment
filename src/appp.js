@@ -47,8 +47,9 @@ app.use("/api/v1/healthcheck", HealthCheckRouter)
 
 
 import authRouter from "./routes/authRoute.js"
-
+import projectrouter from "./routes/projectRoutes.js"
 app.use("/api/v1/auth", authRouter)
+app.use("/api/v1/project", projectrouter)
 
 
 // Global error handler (must be after all routes)

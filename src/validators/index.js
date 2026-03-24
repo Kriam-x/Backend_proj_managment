@@ -85,7 +85,7 @@ const ChangeCurrentpasswordValidator = () => {
     ]
 }
 
-const Creatprojectvalidator = () => {
+const Createprojectvalidator = () => {
     return [
         body("name")
             .notEmpty()
@@ -116,4 +116,4 @@ const AddprojectmemberValidator = () => {
 
 
 
-export { Creatprojectvalidator, RegisterUserValidator, UserLoginValidator, ForgotpasswordValidator, resetforgotpasswordValidator, ChangeCurrentpasswordValidator, AddprojectmemberValidator }
+export { Createprojectvalidator, RegisterUserValidator, UserLoginValidator, ForgotpasswordValidator, resetforgotpasswordValidator, ChangeCurrentpasswordValidator, AddprojectmemberValidator }
